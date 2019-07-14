@@ -6,17 +6,28 @@
 #define DIGIT_HIGH_BIT_NUM (8)
 #define DIGIT_LOW_BIT_NUM (2)
 
+#define ASCII_DC1 (0x11)
+#define ASCII_DC2 (0x12)
+#define ASCII_DC3 (0x13)
+#define ASCII_DC4 (0x14)
+
 const unsigned char toneSpkPin = 3;
 
 #define SIZEOFARRAY(arr) (sizeof(arr) / sizeof(arr[0]))
 const int writePortId[] = {A0, A1, A2, A3};
 const int readPortId[] = {4, 5, 6, 7};
 const char keyPadTable[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
-    {'1', '2', '3', ' '},
-    {'4', '5', '6', ' '},
-    {'7', '8', '9', ' '},
-    {'0', ' ', ' ', '\r'}};
+    {'1', '2', '3', '\0'},
+    {'4', '5', '6', '\0'},
+    {'7', '8', '9', '\0'},
+    {'0', ' ', '-', '\r'}};
+const char keyPadTable2[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
+    {'P', 'L', 'T', ASCII_DC1},
+    {'i', 'c', 'u', ASCII_DC2},
+    {'A', 'b', 'd', ASCII_DC3},
+    {'E', 'e', 'F', '\r'}};
 const int keyPadReadTimes = 5;
+volatile unsigned char pressFnKey = 0;
 volatile unsigned char keyPadChange = 0;
 volatile unsigned char button[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
     {0, 0, 0, 0},
@@ -284,22 +295,46 @@ void scanKeyPad(void)
           if (button[lpcnt2][lpcnt] == keyPadReadTimes)
           {
             keyPadChange = 1;
-            dispDigitPatternTbl[0] = dispDigitPatternTbl[1];
-            dispDigitPatternTbl[1] = dispDigitPatternTbl[2];
-            dispDigitPatternTbl[2] = dispDigitPatternTbl[3];
-            dispDigitPatternTbl[3] = keyPadTable[lpcnt2][lpcnt];
             if ('\r' == keyPadTable[lpcnt2][lpcnt])
             {
-              dispDigitPatternTbl[0] = ' ';
-              dispDigitPatternTbl[1] = ' ';
-              dispDigitPatternTbl[2] = ' ';
-              dispDigitPatternTbl[3] = ' ';
+              pressFnKey = 1;
+            }
+            else
+            {
+              char readKey;
+              if(pressFnKey)
+              {
+                readKey = keyPadTable[lpcnt2][lpcnt];
+              }
+              else
+              {
+                readKey = keyPadTable2[lpcnt2][lpcnt];
+              }
+              switch(readKey)
+              {
+              case ASCII_DC1:
+                break;
+              case ASCII_DC2:
+                break;
+              case ASCII_DC3:
+                break;
+              default:
+                dispDigitPatternTbl[0] = dispDigitPatternTbl[1];
+                dispDigitPatternTbl[1] = dispDigitPatternTbl[2];
+                dispDigitPatternTbl[2] = dispDigitPatternTbl[3];
+                dispDigitPatternTbl[3] = readKey;
+                break;
+              }
             }
           }
         }
       }
       else
       {
+        if ('\r' == keyPadTable[lpcnt2][lpcnt])
+        {
+          pressFnKey = 0;
+        }
         button[lpcnt2][lpcnt] = 0;
       }
     }
@@ -353,6 +388,7 @@ class LightsNumbersWithLEDDigit
 {
 protected:
   static const unsigned short ledBitPattern[];
+  static const unsigned short ledBitPattern2[];
   char digit;
 
 public:
@@ -454,6 +490,35 @@ const unsigned short LightsNumbersWithLEDDigit::ledBitPattern[11] = {
     0b0000000000000000, //' '
     //------zyxgfedcba
 };
+const unsigned short LightsNumbersWithLEDDigit::ledBitPattern2[] = {
+    //------:T.-------
+    //------zyxgfedcba
+    0b0000000001110011, //'P'
+    0b0000000000111000, //'L'
+    0b0000000001000000, //'-'
+    0b0000000000001000, //'_'
+    0b0000000001110111, //'A'
+    0b0000000001011111, //'a'
+    0b0000000000111100, //'b'
+    0b0000000000111001, //'C'
+    0b0000000001011000, //'c'
+    0b0000000000011110, //'d'
+    0b0000000001111001, //'E'
+    0b0000000001111011, //'e'
+    0b0000000001110001, //'F'
+    0b0000000001110110, //'H'
+    0b0000000001110100, //'h'
+    0b0000000000000100, //'i'
+    0b0000000000011110, //'J'
+    0b0000000001111000, //'k'
+    0b0000000001011100, //'o'
+    0b0000000001010000, //'r'
+    0b0000000100000001, //'T'
+    0b0000000000111110, //'U'
+    0b0000000000011100, //'u'
+    //------zyxgfedcba
+    //------:T.-------
+};
 unsigned short LightsNumbersWithLEDDigit::bitPattern(void)
 {
   switch (digit)
@@ -471,6 +536,52 @@ unsigned short LightsNumbersWithLEDDigit::bitPattern(void)
     return ledBitPattern[digit - '0'];
   case ' ':
     return ledBitPattern[10];
+  case 'P':
+    return ledBitPattern2[0];
+  case 'L':
+    return ledBitPattern2[1];
+  case '-':
+    return ledBitPattern2[2];
+  case '_':
+    return ledBitPattern2[3];
+  case 'A':
+    return ledBitPattern2[4];
+  case 'a':
+    return ledBitPattern2[5];
+  case 'b':
+    return ledBitPattern2[6];
+  case 'C':
+    return ledBitPattern2[7];
+  case 'c':
+    return ledBitPattern2[8];
+  case 'd':
+    return ledBitPattern2[9];
+  case 'E':
+    return ledBitPattern2[10];
+  case 'e':
+    return ledBitPattern2[11];
+  case 'F':
+    return ledBitPattern2[12];
+  case 'H':
+    return ledBitPattern2[13];
+  case 'h':
+    return ledBitPattern2[14];
+  case 'i':
+    return ledBitPattern2[15];
+  case 'J':
+    return ledBitPattern2[16];
+  case 'k':
+    return ledBitPattern2[17];
+  case 'o':
+    return ledBitPattern2[18];
+  case 'r':
+    return ledBitPattern2[19];
+  case 'T':
+    return ledBitPattern2[20];
+  case 'U':
+    return ledBitPattern2[21];
+  case 'u':
+    return ledBitPattern2[22];
   default:
     return 0U;
   }

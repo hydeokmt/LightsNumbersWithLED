@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "software\\Lights-Numbers-With-LED8\\Lights-Numbers-With-LED8.ino",
+    "port": "COM4"
+}
