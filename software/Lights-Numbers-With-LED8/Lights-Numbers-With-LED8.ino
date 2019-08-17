@@ -23,12 +23,12 @@ const char keyPadTable[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
     {'0', ' ', '-', '\r'}};
 const char keyPadTable2[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
     {'P', 'L', 'T', ASCII_DC1},
-    {'i', 'c', 'u', ASCII_DC2},
+    {'i', 'C', 'U', ASCII_DC2},
     {'A', 'b', 'd', ASCII_DC3},
     {'E', 'e', 'F', '\r'}};
 const int keyPadReadTimes = 5;
 volatile unsigned char pressFnKey = 0;
-volatile unsigned char keyPadChange = 0;
+volatile unsigned char keyPadChangeOn = 0;
 volatile unsigned char button[SIZEOFARRAY(writePortId)][SIZEOFARRAY(readPortId)] = {
     {0, 0, 0, 0},
     {0, 0, 0, 0},
@@ -294,7 +294,7 @@ void scanKeyPad(void)
           ++(button[lpcnt2][lpcnt]);
           if (button[lpcnt2][lpcnt] == keyPadReadTimes)
           {
-            keyPadChange = 1;
+            keyPadChangeOn = 1;
             if ('\r' == keyPadTable[lpcnt2][lpcnt])
             {
               pressFnKey = 1;
@@ -302,7 +302,7 @@ void scanKeyPad(void)
             else
             {
               char readKey;
-              if(pressFnKey)
+              if(pressFnKey==0)
               {
                 readKey = keyPadTable[lpcnt2][lpcnt];
               }
@@ -386,9 +386,16 @@ public:
 };
 class LightsNumbersWithLEDDigit
 {
+public:
+  typedef struct LedBitPatternInfo
+  {
+    char letter;
+    unsigned short bitPattern;
+  } LedBitPatternInfo;
+
 protected:
   static const unsigned short ledBitPattern[];
-  static const unsigned short ledBitPattern2[];
+  static const LedBitPatternInfo ledBitPattern2[];
   char digit;
 
 public:
@@ -401,7 +408,8 @@ public:
     return 10;
   };
   unsigned short bitPattern(void);
-  void setData(TransferData &transferData){
+  void setData(TransferData &transferData)
+  {
     transferData.append(*this);
   }
 };
@@ -490,34 +498,34 @@ const unsigned short LightsNumbersWithLEDDigit::ledBitPattern[11] = {
     0b0000000000000000, //' '
     //------zyxgfedcba
 };
-const unsigned short LightsNumbersWithLEDDigit::ledBitPattern2[] = {
-    //------:T.-------
-    //------zyxgfedcba
-    0b0000000001110011, //'P'
-    0b0000000000111000, //'L'
-    0b0000000001000000, //'-'
-    0b0000000000001000, //'_'
-    0b0000000001110111, //'A'
-    0b0000000001011111, //'a'
-    0b0000000000111100, //'b'
-    0b0000000000111001, //'C'
-    0b0000000001011000, //'c'
-    0b0000000000011110, //'d'
-    0b0000000001111001, //'E'
-    0b0000000001111011, //'e'
-    0b0000000001110001, //'F'
-    0b0000000001110110, //'H'
-    0b0000000001110100, //'h'
-    0b0000000000000100, //'i'
-    0b0000000000011110, //'J'
-    0b0000000001111000, //'k'
-    0b0000000001011100, //'o'
-    0b0000000001010000, //'r'
-    0b0000000100000001, //'T'
-    0b0000000000111110, //'U'
-    0b0000000000011100, //'u'
-    //------zyxgfedcba
-    //------:T.-------
+const LightsNumbersWithLEDDigit::LedBitPatternInfo LightsNumbersWithLEDDigit::ledBitPattern2[] = {
+    //  , 0b------:T.-------
+    //  , 0b------zyxgfedcba
+    {'P', 0b0000000001110011}, //'P'
+    {'L', 0b0000000000111000}, //'L'
+    {'-', 0b0000000001000000}, //'-'
+    {'_', 0b0000000000001000}, //'_'
+    {'A', 0b0000000001110111}, //'A'
+    {'a', 0b0000000001011111}, //'a'
+    {'b', 0b0000000001111100}, //'b'
+    {'C', 0b0000000000111001}, //'C'
+    {'c', 0b0000000001011000}, //'c'
+    {'d', 0b0000000000011110}, //'d'
+    {'E', 0b0000000001111001}, //'E'
+    {'e', 0b0000000001111011}, //'e'
+    {'F', 0b0000000001110001}, //'F'
+    {'H', 0b0000000001110110}, //'H'
+    {'h', 0b0000000001110100}, //'h'
+    {'I', 0b0000000100001001}, //'I'
+    {'i', 0b0000000000000100}, //'i'
+    {'J', 0b0000000000011110}, //'J'
+    {'k', 0b0000000001111000}, //'k'
+    {'n', 0b0000000001010100}, //'n'
+    {'o', 0b0000000001011100}, //'o'
+    {'r', 0b0000000001010000}, //'r'
+    {'T', 0b0000000100000001}, //'T'
+    {'U', 0b0000000000111110}, //'U'
+    {'u', 0b0000000000011100}, //'u'
 };
 unsigned short LightsNumbersWithLEDDigit::bitPattern(void)
 {
@@ -536,53 +544,14 @@ unsigned short LightsNumbersWithLEDDigit::bitPattern(void)
     return ledBitPattern[digit - '0'];
   case ' ':
     return ledBitPattern[10];
-  case 'P':
-    return ledBitPattern2[0];
-  case 'L':
-    return ledBitPattern2[1];
-  case '-':
-    return ledBitPattern2[2];
-  case '_':
-    return ledBitPattern2[3];
-  case 'A':
-    return ledBitPattern2[4];
-  case 'a':
-    return ledBitPattern2[5];
-  case 'b':
-    return ledBitPattern2[6];
-  case 'C':
-    return ledBitPattern2[7];
-  case 'c':
-    return ledBitPattern2[8];
-  case 'd':
-    return ledBitPattern2[9];
-  case 'E':
-    return ledBitPattern2[10];
-  case 'e':
-    return ledBitPattern2[11];
-  case 'F':
-    return ledBitPattern2[12];
-  case 'H':
-    return ledBitPattern2[13];
-  case 'h':
-    return ledBitPattern2[14];
-  case 'i':
-    return ledBitPattern2[15];
-  case 'J':
-    return ledBitPattern2[16];
-  case 'k':
-    return ledBitPattern2[17];
-  case 'o':
-    return ledBitPattern2[18];
-  case 'r':
-    return ledBitPattern2[19];
-  case 'T':
-    return ledBitPattern2[20];
-  case 'U':
-    return ledBitPattern2[21];
-  case 'u':
-    return ledBitPattern2[22];
   default:
+    for (unsigned int lpcnt = 0U; lpcnt < SIZEOFARRAY(ledBitPattern2); ++lpcnt)
+    {
+      if (ledBitPattern2[lpcnt].letter == digit)
+      {
+        return ledBitPattern2[lpcnt].bitPattern;
+      }
+    }
     return 0U;
   }
 }
@@ -680,11 +649,15 @@ void loop()
 // Serial.print(" ");
 // Serial.print(dispDigitPatternTbl[3]);
 // Serial.print("\n");
-  lightsNumbersWithLEDBord->setDigit(0,0,dispDigitPatternTbl[0]);
-  lightsNumbersWithLEDBord->setDigit(1,0,dispDigitPatternTbl[1]);
-  lightsNumbersWithLEDBord->setDigit(2,0,dispDigitPatternTbl[2]);
-  lightsNumbersWithLEDBord->setDigit(3,0,dispDigitPatternTbl[3]);
-  lightsNumbersWithLEDBord->transfer();
+  if(keyPadChangeOn)
+  {
+    lightsNumbersWithLEDBord->setDigit(0,0,dispDigitPatternTbl[0]);
+    lightsNumbersWithLEDBord->setDigit(1,0,dispDigitPatternTbl[1]);
+    lightsNumbersWithLEDBord->setDigit(2,0,dispDigitPatternTbl[2]);
+    lightsNumbersWithLEDBord->setDigit(3,0,dispDigitPatternTbl[3]);
+    lightsNumbersWithLEDBord->transfer();
+    keyPadChangeOn = 0;
+  }
   // digitPatternData->setDigit(0,0,dispDigitPatternTbl[0]);
   // digitPatternData->setDigit(1,0,dispDigitPatternTbl[1]);
   // digitPatternData->setDigit(2,0,dispDigitPatternTbl[2]);
